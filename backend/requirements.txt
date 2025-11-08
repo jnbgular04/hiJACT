@@ -1,0 +1,17 @@
+fastapi>=0.95.0
+uvicorn[standard]>=0.18.0
+pydantic>=1.10.0
+requests>=2.28.0
+python-dotenv>=1.0.0
+openai>=1.0.0
+pymongo>=4.0.0
+numpy>=1.24.0
+python-multipart>=0.0.6
+pandas>=2.0.0
+openpyxl>=3.0.0
+PyPDF2>=3.0.0
+# LangChain (optional for RAG ingestion)
+langchain>=0.0.268
+langchain-community>=0.0.7
+langchain-text-splitters
+pypdf

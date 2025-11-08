@@ -1,0 +1,9 @@
+langchain
+langchain_community
+langchain_core
+load_dotenv
+langchain_openai
+langchain_mongodb
+pymongo 
+pypdf
+streamlit
