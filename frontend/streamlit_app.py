@@ -5,7 +5,48 @@ from datetime import datetime
 import uuid
 
 
-st.set_page_config(page_title="Bill Assistant", layout="wide")
+# --- Global Styles ---
+st.markdown(
+    """
+    <style>
+    /* 🌈 App-wide background */
+    body {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffe4cc 100%);
+    }
+
+    /* 🟧 Gradient header styling */
+    .bill-header {
+        background: linear-gradient(to right, #f97316, #ea580c);
+        padding: 16px;
+        border-radius: 12px;
+        color: white;
+        margin-bottom: 10px;
+    }
+
+    .bill-header h1 {
+        margin: 0;
+        font-size: 32px;
+        color: white !important; /* ensures text is visible */
+        background: none !important; /* removes global h1 gradient */
+        -webkit-text-fill-color: white !important;
+    }
+
+    .bill-header small {
+        font-size: 15px;
+        color: #fff8f2;
+    }
+
+    /* 🟠 Gradient text only for chat section titles */
+    .chat-section h1, .chat-section h2, .chat-section h3 {
+        background: linear-gradient(to right, #f97316, #ea580c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # --- Initialize session state ---
 if "messages" not in st.session_state:
@@ -28,32 +69,119 @@ if "messages" not in st.session_state:
 # --- Sidebar / Header ---
 st.markdown(
     """
-    <div style="background: linear-gradient(to right, #f97316, #ea580c); padding: 12px; border-radius: 8px; color: white;">
-        <h1 style="margin:0; font-size:28px;">Bill Assistant</h1>
+    <div class="bill-header">
+        <h1>Bill Assistant AI</h1>
         <small>AI-powered bill analysis & expense tracking</small>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-# Custom styles for chat UI
+# Custom styles for chat UI (gradient orange + dark background)
 st.markdown(
     """
     <style>
-    .chat-container { max-height: 60vh; overflow-y: auto; padding: 8px; }
-    .msg-row { display: flex; margin: 8px 0; }
-    .msg-bubble { padding: 12px; border-radius: 12px; max-width: 75%; }
-    .msg-user { background: #e5e7eb; color: #111827; margin-left: auto; border-bottom-right-radius: 2px; }
-    .msg-assistant { background: #fff7ed; color: #92400e; margin-right: auto; border-bottom-left-radius: 2px; }
-    .avatar { width:36px; height:36px; border-radius:50%; display:inline-block; text-align:center; line-height:36px; font-weight:bold; }
-    .avatar-user { background:#6b7280; color:white; }
-    .avatar-assistant { background:#f97316; color:white; }
-    .timestamp { font-size:11px; color:#6b7280; margin-top:4px; }
-    .attachment { font-size:13px; color:#065f46; }
+    /* --- App background --- */
+    html, body, [data-testid="stAppViewContainer"] {
+        background: linear-gradient(180deg, #1e1e1e 0%, #0b0b0b 100%) !important;
+        color: #f3f4f6 !important;
+    }
+
+    /* --- Header gradient --- */
+    div[data-testid="stMarkdownContainer"] h1 {
+        background: linear-gradient(to right, #f97316, #ea580c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+    }
+
+    /* --- Chat container --- */
+    .chat-container {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+    }
+
+    /* --- Message bubbles --- */
+    .msg-row { display: flex; margin: 10px 0; }
+    .msg-bubble { padding: 12px 16px; border-radius: 16px; max-width: 75%; line-height: 1.5; }
+
+    /* User message (right side) */
+    .msg-user {
+        background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+        color: #f3f4f6;
+        margin-left: auto;
+        border-bottom-right-radius: 2px;
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.08);
+    }
+
+    /* Assistant message (left side) */
+    .msg-assistant {
+        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+        color: #78350f;
+        margin-right: auto;
+        border-bottom-left-radius: 2px;
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.2);
+    }
+
+    /* --- Avatars --- */
+    .avatar {
+        width: 38px; height: 38px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold; font-size: 16px;
+        box-shadow: 0 0 8px rgba(0,0,0,0.4);
+    }
+    .avatar-user { background: #6b7280; color: white; }
+    .avatar-assistant {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        color: white;
+        box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+    }
+
+    /* --- Timestamps & attachments --- */
+    .timestamp { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+    .attachment { font-size: 13px; color: #065f46; }
+
+    /* --- Buttons --- */
+    button {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3) !important;
+        border-radius: 10px !important;
+    }
+
+    button:hover {
+        background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.5) !important;
+    }
+
+    button:active { transform: translateY(0) !important; }
+
+    /* --- Sidebar --- */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #111827 0%, #0f172a 100%) !important;
+        color: white !important;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #f97316 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
 
 # Backend base URL
 API_BASE = os.environ.get("API_BASE_URL", "http://localhost:8000")
@@ -203,4 +331,3 @@ with chat_container:
                             st.markdown(f"<div class='attachment'>📎 {src_name}</div>", unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
