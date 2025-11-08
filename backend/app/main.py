@@ -64,7 +64,7 @@ app.add_middleware(
 )
 
 
-def chunk_text(text: str, chunk_size: int = 500, overlap: int = 100) -> List[str]:
+def chunk_text(text: str, chunk_size: int = 600, overlap: int = 50) -> List[str]:
     words = text.split()
     chunks = []
     i = 0
@@ -159,9 +159,12 @@ async def ingest_pdf(file: UploadFile = File(...)):
 
             loader = PyPDFLoader(str(tmp_path))
             pages = loader.load()
-            cleaned_pages = [p for p in pages if len(p.page_content.split()) > 20]
 
-            splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=150)
+            # Combine all page text into a single document (embed whole PDF)
+            full_text_parts = [p.page_content for p in pages if (p.page_content and len(p.page_content.split()) > 0)]
+            full_text = "\n\n".join(full_text_parts).strip()
+            if len(full_text.split()) <= 20:
+                return {"inserted_count": 0, "ids": []}
 
             schema = {
                 "properties": {
@@ -173,12 +176,15 @@ async def ingest_pdf(file: UploadFile = File(...)):
             }
 
             document_transformer = create_metadata_tagger(metadata_schema=schema, llm=llm)
-            docs = document_transformer.transform_documents(cleaned_pages)
-            split_docs = splitter.split_documents(docs)
 
-            vectorstore = MongoDBAtlasVectorSearch.from_documents(split_docs, embeddings, collection=collection)
+            # Create a single Document containing the whole PDF text and tag it
+            whole_doc = Document(page_content=full_text, metadata={"source": file.filename})
+            docs = document_transformer.transform_documents([whole_doc])
 
-            return {"inserted_count": len(split_docs), "ids": []}
+            # Store the single whole-document into MongoDB vectorstore
+            vectorstore = MongoDBAtlasVectorSearch.from_documents(docs, embeddings, collection=collection)
+
+            return {"inserted_count": len(docs), "ids": []}
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"PDF ingestion failed: {e}")
     except Exception as e:
