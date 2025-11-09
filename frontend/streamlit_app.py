@@ -227,6 +227,12 @@ if ingest_button:
             "timestamp": datetime.now(),
         }
         st.session_state.messages.append(assistant_msg)
+        # Clear the file uploader selection so the uploaded PDFs are 'unseated' and user can add new files
+        try:
+            st.session_state["ingest_pdfs"] = None
+        except Exception:
+            # best-effort; don't block on clearing the uploader
+            pass
 
 
 
