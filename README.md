@@ -74,4 +74,4 @@ Backend API (summary)
 
 License
 -------
-[See License](LICENSE.md)
+[See License](LICENSE)
