@@ -14,7 +14,7 @@ Quick badges / tech stack
 Overview
 --------
 
-- Backend: `backend/` — FastAPI app that ingests documents (CSV/XLSX/JSON/TXT/PDF), generates embeddings with OpenAI, stores vectors & metadata in MongoDB, and serves a simple RAG query API.
+- Backend: `backend/` — FastAPI app that ingests pdf documents , generates embeddings with OpenAI, stores vectors & metadata in MongoDB, and serves a simple RAG query API.
 - Frontend: `frontend/` — Streamlit UI for uploading documents and chatting with the RAG assistant.
 
 Quickstart (recommended)
@@ -69,8 +69,6 @@ Notes
 
 Backend API (summary)
 ---------------------
-- GET `/api/health` — health check
-- POST `/api/ingest_text` — ingest a single text document (JSON: `{ "text": "...", "metadata": {...} }`)
 - POST `/api/ingest_pdf` — upload a PDF (multipart form `file`) — the server saves the file and embeds the whole PDF as one document
 - POST `/api/query` — run a RAG query (JSON: `{ "question": "...", "top_k": 4 }`) — returns `{ "answer": ..., "sources": [...] }`
 
