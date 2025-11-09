@@ -157,34 +157,44 @@ async def ingest_pdf(file: UploadFile = File(...)):
             tmp_path = uploads_dir / out_name
             tmp_path.write_bytes(contents)
 
-            loader = PyPDFLoader(str(tmp_path))
-            pages = loader.load()
+            # Load and process the saved PDF; ensure the uploaded file is removed afterwards
+            try:
+                loader = PyPDFLoader(str(tmp_path))
+                pages = loader.load()
 
-            # Combine all page text into a single document (embed whole PDF)
-            full_text_parts = [p.page_content for p in pages if (p.page_content and len(p.page_content.split()) > 0)]
-            full_text = "\n\n".join(full_text_parts).strip()
-            if len(full_text.split()) <= 20:
-                return {"inserted_count": 0, "ids": []}
+                # Combine all page text into a single document (embed whole PDF)
+                full_text_parts = [p.page_content for p in pages if (p.page_content and len(p.page_content.split()) > 0)]
+                full_text = "\n\n".join(full_text_parts).strip()
+                if len(full_text.split()) <= 20:
+                    return {"inserted_count": 0, "ids": []}
 
-            schema = {
-                "properties": {
-                    "title": {"type": "string"},
-                    "keywords": {"type": "array", "items": {"type": "string"}},
-                    "hasCode": {"type": "boolean"},
-                },
-                "required": ["title", "keywords", "hasCode"],
-            }
+                schema = {
+                    "properties": {
+                        "title": {"type": "string"},
+                        "keywords": {"type": "array", "items": {"type": "string"}},
+                        "hasCode": {"type": "boolean"},
+                    },
+                    "required": ["title", "keywords", "hasCode"],
+                }
 
-            document_transformer = create_metadata_tagger(metadata_schema=schema, llm=llm)
+                document_transformer = create_metadata_tagger(metadata_schema=schema, llm=llm)
 
-            # Create a single Document containing the whole PDF text and tag it
-            whole_doc = Document(page_content=full_text, metadata={"source": file.filename})
-            docs = document_transformer.transform_documents([whole_doc])
+                # Create a single Document containing the whole PDF text and tag it
+                whole_doc = Document(page_content=full_text, metadata={"source": file.filename})
+                docs = document_transformer.transform_documents([whole_doc])
 
-            # Store the single whole-document into MongoDB vectorstore
-            vectorstore = MongoDBAtlasVectorSearch.from_documents(docs, embeddings, collection=collection)
+                # Store the single whole-document into MongoDB vectorstore
+                vectorstore = MongoDBAtlasVectorSearch.from_documents(docs, embeddings, collection=collection)
 
-            return {"inserted_count": len(docs), "ids": []}
+                return {"inserted_count": len(docs), "ids": []}
+            finally:
+                # cleanup: remove the uploaded file from disk
+                try:
+                    if tmp_path and tmp_path.exists():
+                        tmp_path.unlink()
+                except Exception:
+                    # swallow cleanup errors; nothing further to do
+                    pass
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"PDF ingestion failed: {e}")
     except Exception as e:
